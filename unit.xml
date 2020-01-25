@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MTConnectDevices xmlns:m="urn:mtconnect.org:MTConnectDevices:1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mtconnect.org:MTConnectDevices:1.1" xsi:schemaLocation="urn:mtconnect.org:MTConnectDevices:1.1 http://www.mtconnect.org/schemas/MTConnectDevices_1.1.xsd">
+	<Header creationTime="2010-03-04T18:44:40+00:00" sender="localhost" instanceId="1267728234" bufferSize="131072" version="1.1"/>
+	<Devices>
+		<Device id="SI809" name="P100" sampleInterval="1000" uuid="SI809">
+			<Description manufacturer="EOS" model="P100" serialNumber="SI809"/>
+			<DataItems>
+				<DataItem category="EVENT" id="avail" type="AVAILABILITY"/>
+				<DataItem category="EVENT" id="job" type="WORKING"/>
+				<DataItem category="CONDITION" id="fault" type="SYSTEM"/>
+			</DataItems>
+		</Device>
+	</Devices>
+</MTConnectDevices>
