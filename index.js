@@ -42,6 +42,13 @@ const server = net.createServer(function (c) { //'connection' listener
             console.log(str);
             c.write(str)
         });
+        fs.readFile('./unit2.txt', 'utf8', (err, data) => {
+            const date = new Date().toISOString();
+            const str = date + '|' + data + '\n';
+            console.log(str);
+            c.write(str)
+        });
+
     }, 1000)
 
     c.on('end', function () {
