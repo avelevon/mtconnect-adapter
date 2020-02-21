@@ -95,7 +95,7 @@ const server = net.createServer(function (c) { //'connection' listener
         c.pipe(c);
 });
 
-client.connectRTU("COM7", {baudRate: 9600}, () => {
+client.connectRTU(process.env.COM, {baudRate: 9600}, () => {
     console.log('COM7 connected')
 });
 
