@@ -1,72 +1,108 @@
 const net = require('net');
-const fs = require('fs');
-const es = require('event-stream');
+const express = require('express');
+const bodyParser = require('body-parser');
+require('dotenv').config();
+
+const app = express();
+
+const ModbusRTU = require("modbus-serial");
+
+app.use(bodyParser.json());
+
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*" );
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, x-requested-with");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    next();
+});
 
 
-const server = net.createServer(function (c) { //'connection' listener
-    console.log('server connected');
-    //
-    // let lines = [];
-    //
-    // let s = fs.createReadStream('unit.txt')
-    //     .pipe(es.split())
-    //     .pipe(es.mapSync(function (line) {
-    //             //pause the readstream
-    //             s.pause();
-    //             lines.push(line);
-    //             s.resume();
-    //         })
-    //             .on('error', function (err) {
-    //                 console.log('Error:', err);
-    //             })
-    //             .on('end', function () {
-    //                 console.log('Finish file reading.');
-    //                 let index = 0;
-    //                 setInterval(() => {
-    //
-    //                     // const str = lines[index++].replace(/\d{4}-\d{2}-\d{2}T\d{2}\:\d{2}\:\d{2}\.\d{6}/, '');
-    //                     const date = new Date().toISOString();
-    //                     const str = date + '|' + lines[index++] + '\n';
-    //                     console.log(str)
-    //                     c.write(str)
-    //                 }, 1000)
-    //
-    //
-    //             })
-    //     );
+//client for Modbus serial connection
+const client = new ModbusRTU();
+client.setID(255);
+client.setTimeout(1000);
 
-    setInterval(() => {
-        fs.readFile('./unit.txt', 'utf8', (err, data) => {
+const run = (c) => {
+    client.readDiscreteInputs(0, 8)
+        .then(data => {
             const date = new Date().toISOString();
-            const str = date + '|' + data + '\n';
-            console.log(str);
-            c.write(str)
-        });
-        fs.readFile('./unit2.txt', 'utf8', (err, data) => {
-            const date = new Date().toISOString();
-            const str = date + '|' + data + '\n';
-            console.log(str);
-            c.write(str)
-        });
 
-    }, 1000)
+            let avail = 'UNAVAILABLE';
+            if (data.data[0]) {
+                avail = 'AVAILABLE'
+            }
 
-    c.on('end', function () {
-        console.log('server disconnected');
-    });
+            let job = 'IDLE';
+            if (data.data[1]) {
+                job = 'RUNNING'
+            }
 
-    c.on('data', (data) => {
-        const str = data.toString('utf8').trim();
-        console.log('data:', str)
-        if (str === '* PING') {
-            console.log('pong')
-            c.write('* PONG 10000');
+            let fault = 'NORMAL';
+            if (data.data[2]) {
+                fault = 'FAULT'
+            }
+
+            const unit = process.env.UNITID.toLowerCase();
+            const str_data = `${date}|${unit}_avail|${avail}|${unit}_job|${job}|${unit}_fault|${fault}\n`;
+            console.log(str_data);
+            c.write(str_data)
+
+        })
+        .catch(error => {
+            console.log(error.message)
+        })
+
+    //web server for job start emulation
+    app.get('/:relay/:action', async (req, res) => {
+        const relay = req.params.relay;
+        const action = req.params.action === 'on';
+
+        try {
+            client.writeCoil(relay, action)
+                .then(data => {
+                    console.log('write', data)
+                })
+                .catch(error => {
+                    console.log('write_error', error.message)
+                });
+            res.status(201).send('relay switched')
+        } catch (error) {
+            res.status(400).send(error.message)
         }
     });
 
-    c.pipe(c);
+}
+
+//server for write in socket MTConnect agent
+const server = net.createServer(function (c) { //'connection' listener
+    console.log('server connected');
+        setInterval(() => run(c), 1000);
+
+        c.on('end', function () {
+            console.log('server disconnected');
+        });
+
+        c.on('data', (data) => {
+            const str = data.toString('utf8').trim();
+            console.log('data:', str)
+            if (str === '* PING') {
+                console.log('pong')
+                c.write('* PONG 10000');
+            }
+        });
+
+        c.pipe(c);
 });
+
+client.connectRTU("COM7", {baudRate: 9600}, () => {
+    console.log('COM7 connected')
+});
+
 server.listen(7878, function () { //'listening' listener
     console.log('server bound');
+});
 
+app.listen(3999, () => {
+    console.log('Web Server for MTC adapter started...');
 });
