@@ -3,6 +3,7 @@
 const net = require('net');
 const express = require('express');
 const bodyParser = require('body-parser');
+const exec = require('child_process').exec;
 require('dotenv').config();
 
 const app = express();
@@ -25,6 +26,16 @@ const client = new ModbusRTU();
 client.setID(255);
 client.setTimeout(1000);
 
+// Create shutdown function
+function shutdown(callback){
+    exec('shutdown now', function(error, stdout, stderr){ callback(stdout); });
+}
+// Create reboot function
+function reboot(callback){
+    exec('shutdown -r now', function(error, stdout, stderr){ callback(stdout); });
+}
+
+
 const run = (c) => {
     client.readDiscreteInputs(0, 8)
         .then(data => {
@@ -43,6 +54,12 @@ const run = (c) => {
             let fault = 'NORMAL';
             if (data.data[2]) {
                 fault = 'FAULT'
+            }
+            if (data.data[3]) {
+                // Shutdown computer
+                shutdown(function(output){
+                    console.log(output);
+                });
             }
 
             const unit = process.env.UNITID.toLowerCase();
@@ -74,6 +91,12 @@ const run = (c) => {
         }
     });
 
+    app.get('/reboot', async (req, res) => {
+        // Shutdown computer
+        reboot(function(output){
+            console.log(output);
+        });
+    });
 }
 
 //server for write in socket MTConnect agent
