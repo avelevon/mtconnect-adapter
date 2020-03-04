@@ -28,11 +28,11 @@ client.setTimeout(1000);
 
 // Create shutdown function
 function shutdown(callback){
-    exec('sudo /sbin/shutdown now', function(error, stdout, stderr){ callback(stdout); });
+    exec('/sbin/shutdown now', function(error, stdout, stderr){ callback(stdout); });
 }
 // Create reboot function
 function reboot(callback){
-    exec('sudo /sbin/shutdown -r now', function(error, stdout, stderr){ callback(stdout); });
+    exec('/sbin/shutdown -r now', function(error, stdout, stderr){ callback(stdout); });
 }
 
 
@@ -55,6 +55,7 @@ const run = (c) => {
             if (data.data[2]) {
                 fault = 'FAULT'
             }
+
             if (data.data[3]) {
                 // Shutdown computer
                 shutdown(function(output){
