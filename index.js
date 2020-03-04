@@ -28,11 +28,11 @@ client.setTimeout(1000);
 
 // Create shutdown function
 function shutdown(callback){
-    exec('/sbin/shutdown now', function(error, stdout, stderr){ callback(stdout); });
+    exec('sudo /sbin/shutdown now', function(error, stdout, stderr){ callback(stdout); });
 }
 // Create reboot function
 function reboot(callback){
-    exec('/sbin/shutdown -r now', function(error, stdout, stderr){ callback(stdout); });
+    exec('sudo /sbin/shutdown -r now', function(error, stdout, stderr){ callback(stdout); });
 }
 
 
