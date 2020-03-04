@@ -92,10 +92,16 @@ const run = (c) => {
     });
 
     app.get('/reboot', async (req, res) => {
-        // Shutdown computer
-        reboot(function(output){
-            console.log(output);
-        });
+        try {
+            // Reboot computer
+            reboot(function(output){
+                console.log(output);
+                res.status(201).send(output)
+            });
+        } catch (error) {
+            res.status(400).send(error.message)
+        }
+
     });
 }
 
