@@ -65,7 +65,7 @@ const run = (c) => {
 
             const unit = process.env.UNITID.toLowerCase();
             const str_data = `${date}|${unit}_avail|${avail}|${unit}_job|${job}|${unit}_fault|${fault}\n`;
-            console.log(str_data);
+            // console.log(str_data);
             c.write(str_data)
 
         })
@@ -117,9 +117,9 @@ const server = net.createServer(function (c) { //'connection' listener
 
         c.on('data', (data) => {
             const str = data.toString('utf8').trim();
-            console.log('data:', str)
+            // console.log('data:', str)
             if (str === '* PING') {
-                console.log('pong')
+                // console.log('pong')
                 c.write('* PONG 10000');
             }
         });
