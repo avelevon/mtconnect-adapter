@@ -58,7 +58,7 @@ const run = (c) => {
 
             if (data.data[3]) {
                 // Shutdown computer
-                shutdown(function(output){
+                reboot(function(output){
                     console.log(output);
                 });
             }
