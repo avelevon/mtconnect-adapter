@@ -32,7 +32,7 @@ function shutdown(callback){
 }
 // Create reboot function
 function reboot(callback){
-    exec('sudo /sbin/shutdown -r now', function(error, stdout, stderr){ callback(stdout); });
+    exec('sudo /sbin/shutdown -r -t 1', function(error, stdout, stderr){ callback(stdout); });
 }
 
 
