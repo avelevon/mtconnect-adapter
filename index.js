@@ -7,13 +7,13 @@ const exec = require('child_process').exec;
 require('dotenv').config();
 
 const app = express();
-
+let intervalId;
 const ModbusRTU = require("modbus-serial");
 
 app.use(bodyParser.json());
 
 app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*" );
+    res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Credentials", "true");
     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, x-requested-with");
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
@@ -27,12 +27,17 @@ client.setID(255);
 client.setTimeout(1000);
 
 // Create shutdown function
-function shutdown(callback){
-    exec('sudo /sbin/shutdown now', function(error, stdout, stderr){ callback(stdout); });
+function shutdown(callback) {
+    exec('sudo /sbin/shutdown now', function (error, stdout, stderr) {
+        callback(stdout);
+    });
 }
+
 // Create reboot function
-function reboot(callback){
-    exec('sudo /sbin/shutdown -r -t 1', function(error, stdout, stderr){ callback(stdout); });
+function reboot(callback) {
+    exec('sudo /sbin/shutdown -r now', function (error, stdout, stderr) {
+        callback(stdout);
+    });
 }
 
 
@@ -55,13 +60,13 @@ const run = (c) => {
             if (data.data[2]) {
                 fault = 'FAULT'
             }
-
-            if (data.data[3]) {
-                // Shutdown computer
-                reboot(function(output){
-                    console.log(output);
-                });
-            }
+            //
+            // if (data.data[3]) {
+            //     // Shutdown computer
+            //     reboot(function(output){
+            //         console.log(output);
+            //     });
+            // }
 
             const unit = process.env.UNITID.toLowerCase();
             const str_data = `${date}|${unit}_avail|${avail}|${unit}_job|${job}|${unit}_fault|${fault}\n`;
@@ -95,7 +100,7 @@ const run = (c) => {
     app.get('/reboot', async (req, res) => {
         try {
             // Reboot computer
-            reboot(function(output){
+            reboot(function (output) {
                 console.log(output);
                 res.status(201).send(output)
             });
@@ -109,22 +114,33 @@ const run = (c) => {
 //server for write in socket MTConnect agent
 const server = net.createServer(function (c) { //'connection' listener
     console.log('server connected');
-        setInterval(() => run(c), 1000);
+    intervalId = setInterval(() => run(c), 1000);
 
-        c.on('end', function () {
-            console.log('server disconnected');
-        });
+    c.on('end', function () {
+        console.log('server disconnected');
+    });
 
-        c.on('data', (data) => {
-            const str = data.toString('utf8').trim();
-            // console.log('data:', str)
-            if (str === '* PING') {
-                // console.log('pong')
-                c.write('* PONG 10000');
-            }
-        });
+    c.on('error', (err) => {
+        console.log('connection err', err)
+        server.close();
+        clearInterval(intervalId);
+        setTimeout(() => {
+            server.listen(7878, function () { //'listening' listener
+                console.log('server bound');
+            });
+        }, 2000)
+    });
 
-        c.pipe(c);
+    c.on('data', (data) => {
+        const str = data.toString('utf8').trim();
+        // console.log('data:', str)
+        if (str === '* PING') {
+            // console.log('pong')
+            c.write('* PONG 10000');
+        }
+    });
+
+    c.pipe(c);
 });
 
 client.connectRTU(process.env.COM, {baudRate: 9600}, () => {
