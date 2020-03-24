@@ -14,14 +14,14 @@ server.on('connection', (c) => {
     console.log('server connected');
 
     intervalId = setInterval(() => {
-        const data = 'SI809_avail|AVAILABLE|SI809_job|RUNNING|SI809_fault|NORMAL';
-        const date = new Date().toISOString();
+        fs.readFile('./unit.txt', 'utf8', (err, data) => {
+            const date = new Date().toISOString();
             const str = date + '|' + data.toLowerCase() + '\n';
             if (!error) {
                 console.log(str);
                 c.write(str)
             }
-
+        });
     }, 1000)
 
     c.on('end', function () {
