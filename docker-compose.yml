@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  emulator:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    command: sh -c "npm install && node emulator.js"
+    ports:
+      - 7878:7878
+
+  emulator2:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile2
+    ports:
+      - 7879:7879
